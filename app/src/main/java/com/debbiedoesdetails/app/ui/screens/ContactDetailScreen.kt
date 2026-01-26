@@ -24,8 +24,8 @@ fun ContactDetailScreen(
     onBackClick: () -> Unit
 ) {
     var name by remember { mutableStateOf(contact.name) }
-    var phones by remember { mutableStateOf(contact.phones.toMutableList()) }
-    var emails by remember { mutableStateOf(contact.emails.toMutableList()) }
+    val phones = remember { mutableStateListOf(*contact.phones.toTypedArray()) }
+    val emails = remember { mutableStateListOf(*contact.emails.toTypedArray()) }
     var company by remember { mutableStateOf(contact.company) }
     var jobTitle by remember { mutableStateOf(contact.jobTitle) }
     var linkedIn by remember { mutableStateOf(contact.linkedIn) }

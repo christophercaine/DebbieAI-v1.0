@@ -16,6 +16,8 @@ data class Contact(
     val company: String = "",
     val jobTitle: String = "",
     val notes: String = "",
+    val linkedIn: String = "",
+    val twitter: String = "",
     val isPlaceholder: Boolean = false,
     val isDuplicate: Boolean = false,
     val duplicateOf: Long? = null,
