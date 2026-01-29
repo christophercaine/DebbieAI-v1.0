@@ -9,6 +9,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.debbiedoesdetails.app.data.local.Contact
 import com.debbiedoesdetails.app.viewmodel.ContactViewModel
@@ -22,46 +23,69 @@ fun DuplicatesScreen(
     val contacts by viewModel.contacts.collectAsState(initial = emptyList())
     val duplicates = contacts.filter { it.isDuplicate }
 
-    Column(modifier = Modifier.fillMaxSize()) {
-        TopAppBar(
-            title = { Text("Potential Duplicates (${duplicates.size})") },
-            navigationIcon = {
-                IconButton(onClick = onBackClick) {
-                    Icon(Icons.Filled.ArrowBack, contentDescription = "Back")
+    Scaffold(
+        topBar = {
+            TopAppBar(
+                title = { Text("Potential Duplicates (${duplicates.size})") },
+                navigationIcon = {
+                    IconButton(onClick = onBackClick) {
+                        Icon(Icons.Filled.ArrowBack, contentDescription = "Back")
+                    }
                 }
-            }
-        )
-
+            )
+        }
+    ) { paddingValues ->
+        
         if (duplicates.isEmpty()) {
             Box(
-                modifier = Modifier.fillMaxSize(),
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(paddingValues),
                 contentAlignment = Alignment.Center
             ) {
-                Text("No duplicates found!")
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    Text(
+                        text = "No duplicates found!",
+                        style = MaterialTheme.typography.titleMedium
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Text(
+                        text = "All your contacts are unique",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
             }
         } else {
             LazyColumn(
                 modifier = Modifier
                     .fillMaxSize()
-                    .padding(8.dp),
-                verticalArrangement = Arrangement.spacedBy(12.dp)
+                    .padding(paddingValues)
+                    .padding(horizontal = 8.dp),
+                verticalArrangement = Arrangement.spacedBy(12.dp),
+                contentPadding = PaddingValues(vertical = 8.dp)
             ) {
-                items(duplicates) { duplicate ->
+                items(
+                    items = duplicates,
+                    key = { it.id }
+                ) { duplicate ->
                     val originalContact = contacts.find { it.id == duplicate.isDuplicateOf }
-                    if (originalContact != null) {
-                        DuplicatePair(
-                            original = originalContact,
-                            duplicate = duplicate,
-                            onMerge = {
+                    
+                    DuplicatePair(
+                        original = originalContact,
+                        duplicate = duplicate,
+                        onMerge = {
+                            if (originalContact != null) {
                                 viewModel.mergeContacts(originalContact.id, duplicate.id)
-                                onBackClick()
-                            },
-                            onDeleteDuplicate = {
-                                viewModel.deleteContact(duplicate.id)
-                                onBackClick()
                             }
-                        )
-                    }
+                        },
+                        onKeepBoth = {
+                            viewModel.dismissDuplicate(duplicate.id)
+                        },
+                        onDeleteDuplicate = {
+                            viewModel.deleteContact(duplicate.id)
+                        }
+                    )
                 }
             }
         }
@@ -70,9 +94,10 @@ fun DuplicatesScreen(
 
 @Composable
 fun DuplicatePair(
-    original: Contact,
+    original: Contact?,
     duplicate: Contact,
     onMerge: () -> Unit,
+    onKeepBoth: () -> Unit,
     onDeleteDuplicate: () -> Unit
 ) {
     Card(modifier = Modifier.fillMaxWidth()) {
@@ -82,31 +107,64 @@ fun DuplicatePair(
                 .padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            Text("Original Contact", style = MaterialTheme.typography.titleSmall)
-            ContactInfoCard(contact = original)
+            // Original contact (if found)
+            if (original != null) {
+                Text(
+                    text = "Original",
+                    style = MaterialTheme.typography.labelMedium,
+                    color = MaterialTheme.colorScheme.primary
+                )
+                ContactInfoCard(contact = original)
+                
+                Divider()
+            }
 
-            Divider()
-
-            Text("Possible Duplicate", style = MaterialTheme.typography.titleSmall)
+            // Duplicate contact
+            Text(
+                text = if (original != null) "Possible Duplicate" else "Duplicate (original not found)",
+                style = MaterialTheme.typography.labelMedium,
+                color = MaterialTheme.colorScheme.error
+            )
             ContactInfoCard(contact = duplicate)
 
             Divider()
 
-            Row(
+            // Action buttons
+            Column(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                Button(
-                    onClick = onMerge,
-                    modifier = Modifier.weight(1f)
+                // Primary action row
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                    Text("Keep Original")
+                    if (original != null) {
+                        Button(
+                            onClick = onMerge,
+                            modifier = Modifier.weight(1f)
+                        ) {
+                            Text("Merge")
+                        }
+                    }
+                    
+                    OutlinedButton(
+                        onClick = onDeleteDuplicate,
+                        modifier = Modifier.weight(1f),
+                        colors = ButtonDefaults.outlinedButtonColors(
+                            contentColor = MaterialTheme.colorScheme.error
+                        )
+                    ) {
+                        Text("Delete")
+                    }
                 }
-                OutlinedButton(
-                    onClick = onDeleteDuplicate,
-                    modifier = Modifier.weight(1f)
+                
+                // Secondary action
+                TextButton(
+                    onClick = onKeepBoth,
+                    modifier = Modifier.fillMaxWidth()
                 ) {
-                    Text("Delete Duplicate")
+                    Text("Not a duplicate - Keep both")
                 }
             }
         }
@@ -126,15 +184,36 @@ fun ContactInfoCard(contact: Contact) {
                 .padding(12.dp),
             verticalArrangement = Arrangement.spacedBy(4.dp)
         ) {
-            Text(contact.name, style = MaterialTheme.typography.titleSmall)
-            if (contact.emails.isNotEmpty()) {
-                Text("📧 ${contact.emails.first()}", style = MaterialTheme.typography.bodySmall)
-            }
+            Text(
+                text = contact.name,
+                style = MaterialTheme.typography.titleMedium,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis
+            )
+            
             if (contact.phones.isNotEmpty()) {
-                Text("📱 ${contact.phones.first()}", style = MaterialTheme.typography.bodySmall)
+                contact.phones.forEach { phone ->
+                    Text(
+                        text = "📱 $phone",
+                        style = MaterialTheme.typography.bodySmall
+                    )
+                }
             }
+            
+            if (contact.emails.isNotEmpty()) {
+                contact.emails.forEach { email ->
+                    Text(
+                        text = "📧 $email",
+                        style = MaterialTheme.typography.bodySmall
+                    )
+                }
+            }
+            
             if (contact.company.isNotEmpty()) {
-                Text("🏢 ${contact.company}", style = MaterialTheme.typography.bodySmall)
+                Text(
+                    text = "🏢 ${contact.company}",
+                    style = MaterialTheme.typography.bodySmall
+                )
             }
         }
     }
