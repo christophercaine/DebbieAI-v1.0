@@ -3,12 +3,14 @@ package com.debbiedoesdetails.app.viewmodel
 import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
+import com.debbiedoesdetails.app.data.ai.AIService
 import com.debbiedoesdetails.app.data.local.ContactDatabase
 import com.debbiedoesdetails.app.data.repository.ContactRepository
 import com.debbiedoesdetails.app.data.sync.ContactSyncService
 
 class ContactViewModelFactory(
-    private val context: Context
+    private val context: Context,
+    private val claudeApiKey: String = "" // Optional: Set your Claude API key for enhanced AI
 ) : ViewModelProvider.Factory {
     
     @Suppress("UNCHECKED_CAST")
@@ -29,7 +31,12 @@ class ContactViewModelFactory(
                 repository = repository
             )
             
-            return ContactViewModel(repository, syncService) as T
+            // Create AI service
+            val aiService = AIService(
+                apiKey = claudeApiKey
+            )
+            
+            return ContactViewModel(repository, syncService, aiService) as T
         }
         throw IllegalArgumentException("Unknown ViewModel class: ${modelClass.name}")
     }

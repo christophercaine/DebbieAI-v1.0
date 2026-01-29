@@ -2,18 +2,23 @@ package com.debbiedoesdetails.app.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.debbiedoesdetails.app.data.ai.AIService
 import com.debbiedoesdetails.app.data.local.Contact
+import com.debbiedoesdetails.app.data.local.ContactCategory
 import com.debbiedoesdetails.app.data.repository.ContactRepository
 import com.debbiedoesdetails.app.data.sync.ContactSyncService
 import com.debbiedoesdetails.app.data.sync.SyncResult
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
+import java.time.LocalDateTime
 
 class ContactViewModel(
     private val repository: ContactRepository,
-    private val syncService: ContactSyncService
+    private val syncService: ContactSyncService,
+    private val aiService: AIService = AIService()
 ) : ViewModel() {
 
     // All contacts (as Flow for automatic UI updates)
@@ -33,6 +38,14 @@ class ContactViewModel(
     // Search results
     private val _searchResults = MutableStateFlow<List<Contact>>(emptyList())
     val searchResults: StateFlow<List<Contact>> = _searchResults.asStateFlow()
+    
+    // AI Analysis state
+    private val _aiState = MutableStateFlow<AIState>(AIState.Idle)
+    val aiState: StateFlow<AIState> = _aiState.asStateFlow()
+    
+    // Smart search mode
+    private val _isSmartSearch = MutableStateFlow(true)
+    val isSmartSearch: StateFlow<Boolean> = _isSmartSearch.asStateFlow()
 
     /**
      * Sync contacts from device
@@ -43,6 +56,8 @@ class ContactViewModel(
             try {
                 val result = syncService.syncDeviceContacts()
                 _syncState.value = if (result.success) {
+                    // After sync, analyze new contacts with AI
+                    analyzeAllContactsInBackground()
                     SyncState.Success(result)
                 } else {
                     SyncState.Error(result.error ?: "Unknown error")
@@ -69,7 +84,9 @@ class ContactViewModel(
         emails: List<String> = emptyList(),
         company: String = "",
         jobTitle: String = "",
-        notes: String = ""
+        notes: String = "",
+        category: String = ContactCategory.PERSONAL,
+        tags: List<String> = emptyList()
     ) {
         viewModelScope.launch {
             val contact = Contact(
@@ -78,9 +95,14 @@ class ContactViewModel(
                 emails = emails.filter { it.isNotEmpty() },
                 company = company,
                 jobTitle = jobTitle,
-                notes = notes
+                notes = notes,
+                category = category,
+                tags = tags
             )
-            repository.addContact(contact)
+            val id = repository.addContact(contact)
+            
+            // Analyze the new contact with AI
+            analyzeContactInBackground(id)
         }
     }
     
@@ -102,7 +124,7 @@ class ContactViewModel(
     fun updateContact(contact: Contact) {
         viewModelScope.launch {
             repository.updateContact(contact.copy(
-                updatedAt = java.time.LocalDateTime.now()
+                updatedAt = LocalDateTime.now()
             ))
         }
     }
@@ -135,7 +157,8 @@ class ContactViewModel(
                 repository.updateContact(contact.copy(
                     isDuplicate = false,
                     isDuplicateOf = null,
-                    updatedAt = java.time.LocalDateTime.now()
+                    duplicateConfidence = 0f,
+                    updatedAt = LocalDateTime.now()
                 ))
             }
         }
@@ -149,14 +172,19 @@ class ContactViewModel(
     }
     
     /**
-     * Search contacts
+     * Smart search contacts - uses AI for natural language queries
      */
     fun searchContacts(query: String) {
         _searchQuery.value = query
         viewModelScope.launch {
             if (query.isBlank()) {
                 _searchResults.value = emptyList()
+            } else if (_isSmartSearch.value) {
+                // Use AI-powered smart search
+                val allContacts = contacts.first()
+                _searchResults.value = aiService.parseSearchQuery(query, allContacts)
             } else {
+                // Use basic search
                 repository.searchContacts(query).collect { results ->
                     _searchResults.value = results
                 }
@@ -165,11 +193,252 @@ class ContactViewModel(
     }
     
     /**
+     * Toggle smart search mode
+     */
+    fun toggleSmartSearch() {
+        _isSmartSearch.value = !_isSmartSearch.value
+    }
+    
+    /**
      * Clear search
      */
     fun clearSearch() {
         _searchQuery.value = ""
         _searchResults.value = emptyList()
+    }
+    
+    // ===== AI Features =====
+    
+    /**
+     * Analyze a single contact with AI
+     */
+    fun analyzeContact(contactId: Long) {
+        viewModelScope.launch {
+            _aiState.value = AIState.Analyzing
+            try {
+                val contact = repository.getContactById(contactId)
+                if (contact != null) {
+                    val analysis = aiService.analyzeContact(contact)
+                    
+                    // Update contact with AI analysis
+                    repository.updateContact(contact.copy(
+                        category = analysis.suggestedCategory,
+                        aiCategorized = true,
+                        aiCategoryConfidence = analysis.categoryConfidence,
+                        aiSuggestedTags = analysis.suggestedTags,
+                        aiNotes = analysis.insights,
+                        searchKeywords = analysis.searchKeywords,
+                        aiAnalyzedAt = LocalDateTime.now(),
+                        updatedAt = LocalDateTime.now()
+                    ))
+                    
+                    _aiState.value = AIState.Success("Contact analyzed successfully")
+                } else {
+                    _aiState.value = AIState.Error("Contact not found")
+                }
+            } catch (e: Exception) {
+                _aiState.value = AIState.Error(e.message ?: "Analysis failed")
+            }
+        }
+    }
+    
+    /**
+     * Analyze a contact in the background (no UI state changes)
+     */
+    private fun analyzeContactInBackground(contactId: Long) {
+        viewModelScope.launch {
+            try {
+                val contact = repository.getContactById(contactId)
+                if (contact != null && !contact.aiCategorized) {
+                    val analysis = aiService.analyzeContact(contact)
+                    repository.updateContact(contact.copy(
+                        category = analysis.suggestedCategory,
+                        aiCategorized = true,
+                        aiCategoryConfidence = analysis.categoryConfidence,
+                        aiSuggestedTags = analysis.suggestedTags,
+                        aiNotes = analysis.insights,
+                        searchKeywords = analysis.searchKeywords,
+                        aiAnalyzedAt = LocalDateTime.now(),
+                        updatedAt = LocalDateTime.now()
+                    ))
+                }
+            } catch (e: Exception) {
+                e.printStackTrace()
+            }
+        }
+    }
+    
+    /**
+     * Analyze all contacts that haven't been analyzed yet
+     */
+    fun analyzeAllContacts() {
+        viewModelScope.launch {
+            _aiState.value = AIState.Analyzing
+            try {
+                val allContacts = contacts.first()
+                val unanalyzed = allContacts.filter { !it.aiCategorized }
+                var analyzed = 0
+                
+                for (contact in unanalyzed) {
+                    try {
+                        val analysis = aiService.analyzeContact(contact)
+                        repository.updateContact(contact.copy(
+                            category = analysis.suggestedCategory,
+                            aiCategorized = true,
+                            aiCategoryConfidence = analysis.categoryConfidence,
+                            aiSuggestedTags = analysis.suggestedTags,
+                            aiNotes = analysis.insights,
+                            searchKeywords = analysis.searchKeywords,
+                            aiAnalyzedAt = LocalDateTime.now(),
+                            updatedAt = LocalDateTime.now()
+                        ))
+                        analyzed++
+                    } catch (e: Exception) {
+                        e.printStackTrace()
+                    }
+                }
+                
+                _aiState.value = AIState.Success("Analyzed $analyzed contacts")
+            } catch (e: Exception) {
+                _aiState.value = AIState.Error(e.message ?: "Analysis failed")
+            }
+        }
+    }
+    
+    /**
+     * Background analysis (no UI feedback)
+     */
+    private fun analyzeAllContactsInBackground() {
+        viewModelScope.launch {
+            try {
+                val allContacts = contacts.first()
+                val unanalyzed = allContacts.filter { !it.aiCategorized }
+                
+                for (contact in unanalyzed) {
+                    try {
+                        val analysis = aiService.analyzeContact(contact)
+                        repository.updateContact(contact.copy(
+                            category = analysis.suggestedCategory,
+                            aiCategorized = true,
+                            aiCategoryConfidence = analysis.categoryConfidence,
+                            aiSuggestedTags = analysis.suggestedTags,
+                            aiNotes = analysis.insights,
+                            searchKeywords = analysis.searchKeywords,
+                            aiAnalyzedAt = LocalDateTime.now(),
+                            updatedAt = LocalDateTime.now()
+                        ))
+                    } catch (e: Exception) {
+                        e.printStackTrace()
+                    }
+                }
+            } catch (e: Exception) {
+                e.printStackTrace()
+            }
+        }
+    }
+    
+    /**
+     * Find duplicates with AI-powered fuzzy matching
+     */
+    fun findSmartDuplicates() {
+        viewModelScope.launch {
+            _aiState.value = AIState.Analyzing
+            try {
+                val allContacts = contacts.first()
+                var duplicatesFound = 0
+                
+                for (contact in allContacts) {
+                    if (contact.isDuplicate) continue
+                    
+                    val potentialDuplicates = aiService.findDuplicates(contact, allContacts)
+                    
+                    for ((duplicate, confidence) in potentialDuplicates) {
+                        if (confidence > 0.7f && !duplicate.isDuplicate) {
+                            repository.updateContact(duplicate.copy(
+                                isDuplicate = true,
+                                isDuplicateOf = contact.id,
+                                duplicateConfidence = confidence,
+                                updatedAt = LocalDateTime.now()
+                            ))
+                            duplicatesFound++
+                        }
+                    }
+                }
+                
+                _aiState.value = AIState.Success("Found $duplicatesFound potential duplicates")
+            } catch (e: Exception) {
+                _aiState.value = AIState.Error(e.message ?: "Duplicate detection failed")
+            }
+        }
+    }
+    
+    /**
+     * Apply AI-suggested tags to a contact
+     */
+    fun applyAISuggestedTags(contactId: Long) {
+        viewModelScope.launch {
+            val contact = repository.getContactById(contactId)
+            if (contact != null && contact.aiSuggestedTags.isNotEmpty()) {
+                repository.updateContact(contact.copy(
+                    tags = (contact.tags + contact.aiSuggestedTags).distinct(),
+                    aiSuggestedTags = emptyList(),
+                    updatedAt = LocalDateTime.now()
+                ))
+            }
+        }
+    }
+    
+    /**
+     * Update contact category
+     */
+    fun updateContactCategory(contactId: Long, category: String) {
+        viewModelScope.launch {
+            val contact = repository.getContactById(contactId)
+            if (contact != null) {
+                repository.updateContact(contact.copy(
+                    category = category,
+                    contactType = category,
+                    updatedAt = LocalDateTime.now()
+                ))
+            }
+        }
+    }
+    
+    /**
+     * Add tag to contact
+     */
+    fun addTag(contactId: Long, tag: String) {
+        viewModelScope.launch {
+            val contact = repository.getContactById(contactId)
+            if (contact != null && tag !in contact.tags) {
+                repository.updateContact(contact.copy(
+                    tags = contact.tags + tag,
+                    updatedAt = LocalDateTime.now()
+                ))
+            }
+        }
+    }
+    
+    /**
+     * Remove tag from contact
+     */
+    fun removeTag(contactId: Long, tag: String) {
+        viewModelScope.launch {
+            val contact = repository.getContactById(contactId)
+            if (contact != null) {
+                repository.updateContact(contact.copy(
+                    tags = contact.tags - tag,
+                    updatedAt = LocalDateTime.now()
+                ))
+            }
+        }
+    }
+    
+    /**
+     * Reset AI state
+     */
+    fun resetAIState() {
+        _aiState.value = AIState.Idle
     }
 }
 
@@ -181,4 +450,14 @@ sealed class SyncState {
     object Syncing : SyncState()
     data class Success(val result: SyncResult) : SyncState()
     data class Error(val message: String) : SyncState()
+}
+
+/**
+ * AI analysis state for UI
+ */
+sealed class AIState {
+    object Idle : AIState()
+    object Analyzing : AIState()
+    data class Success(val message: String) : AIState()
+    data class Error(val message: String) : AIState()
 }
