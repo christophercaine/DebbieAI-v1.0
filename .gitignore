@@ -1,15 +1,24 @@
+# Android
 *.iml
-.gradle
+.gradle/
 /local.properties
-/.idea/caches
-/.idea/libraries
-/.idea/modules.xml
-/.idea/workspace.xml
-/.idea/navEditor.xml
-/.idea/assetWizardSettings.xml
-.DS_Store
-/build
+/.idea/
+/build/
+/app/build/
 /captures
-.externalNativeBuild
-.cxx
+.externalNativeBuild/
+.cxx/
+
+# Secrets
+*.keystore
+*.jks
+.env
 local.properties
+google-services.json
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log

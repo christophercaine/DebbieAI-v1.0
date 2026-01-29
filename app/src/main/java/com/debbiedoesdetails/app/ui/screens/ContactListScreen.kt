@@ -33,10 +33,15 @@ fun ContactListScreen(
             title = { Text("Contacts") },
             actions = {
                 IconButton(onClick = onDuplicatesClick) {
-                    Badge(modifier = Modifier.offset(x = (-5).dp, y = 5.dp)) {
-                        Text(duplicateCount.toString())
+                    BadgedBox(badge = {
+                        if (duplicateCount > 0) {
+                            Badge {
+                                Text(duplicateCount.toString())
+                            }
+                        }
+                    }) {
+                        Icon(Icons.Filled.Warning, contentDescription = "Duplicates")
                     }
-                    Icon(Icons.Filled.Warning, contentDescription = "Duplicates")
                 }
                 IconButton(onClick = onRefresh) {
                     Icon(Icons.Filled.Refresh, contentDescription = "Refresh")

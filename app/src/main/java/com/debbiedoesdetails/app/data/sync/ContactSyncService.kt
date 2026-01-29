@@ -18,7 +18,7 @@ class ContactSyncService(
             for (contact in appContacts) {
                 val duplicate = findDuplicate(contact, appContacts)
                 if (duplicate != null && duplicate.id != contact.id) {
-                    val updated = contact.copy(isDuplicate = true, duplicateOf = duplicate.id)
+                    val updated = contact.copy(isDuplicate = true, isDuplicateOf = duplicate.id)
                     repository.updateContact(updated)
                 }
             }

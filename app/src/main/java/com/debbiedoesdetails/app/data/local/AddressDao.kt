@@ -9,21 +9,24 @@ import kotlinx.coroutines.flow.Flow
 
 @Dao
 interface AddressDao {
-    @Query("SELECT * FROM addresses WHERE contactId = :contactId ORDER BY isPrimary DESC")
-    fun getAddressesByContact(contactId: String): Flow<List<Address>>
-
-    @Query("SELECT * FROM addresses WHERE id = :id")
-    suspend fun getAddressById(id: String): Address?
-
     @Insert
     suspend fun insertAddress(address: Address): Long
 
     @Update
     suspend fun updateAddress(address: Address)
 
-    @Query("DELETE FROM addresses WHERE id = :id")
-    suspend fun deleteAddressById(id: String)
+    @Delete
+    suspend fun deleteAddress(address: Address)
+
+    @Query("SELECT * FROM addresses WHERE contactId = :contactId ORDER BY isPrimary DESC")
+    fun getAddressesByContact(contactId: Long): Flow<List<Address>>
+
+    @Query("SELECT * FROM addresses WHERE id = :id")
+    suspend fun getAddressById(id: Long): Address?
 
     @Query("DELETE FROM addresses WHERE contactId = :contactId")
-    suspend fun deleteAddressesByContact(contactId: String)
+    suspend fun deleteAddressesByContact(contactId: Long)
+
+    @Query("DELETE FROM addresses WHERE id = :id")
+    suspend fun deleteAddressById(id: Long)
 }

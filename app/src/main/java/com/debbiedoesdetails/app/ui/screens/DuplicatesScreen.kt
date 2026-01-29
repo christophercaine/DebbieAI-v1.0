@@ -47,13 +47,13 @@ fun DuplicatesScreen(
                 verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
                 items(duplicates) { duplicate ->
-                    val originalContact = contacts.find { it.id == duplicate.duplicateOf }
+                    val originalContact = contacts.find { it.id == duplicate.isDuplicateOf }
                     if (originalContact != null) {
                         DuplicatePair(
                             original = originalContact,
                             duplicate = duplicate,
                             onMerge = {
-                                viewModel.mergeContacts(originalContact, duplicate)
+                                viewModel.mergeContacts(originalContact.id, duplicate.id)
                                 onBackClick()
                             },
                             onDeleteDuplicate = {
@@ -127,11 +127,11 @@ fun ContactInfoCard(contact: Contact) {
             verticalArrangement = Arrangement.spacedBy(4.dp)
         ) {
             Text(contact.name, style = MaterialTheme.typography.titleSmall)
-            if (contact.email.isNotEmpty()) {
-                Text("📧 ${contact.email}", style = MaterialTheme.typography.bodySmall)
+            if (contact.emails.isNotEmpty()) {
+                Text("📧 ${contact.emails.first()}", style = MaterialTheme.typography.bodySmall)
             }
-            if (contact.phone.isNotEmpty()) {
-                Text("📱 ${contact.phone}", style = MaterialTheme.typography.bodySmall)
+            if (contact.phones.isNotEmpty()) {
+                Text("📱 ${contact.phones.first()}", style = MaterialTheme.typography.bodySmall)
             }
             if (contact.company.isNotEmpty()) {
                 Text("🏢 ${contact.company}", style = MaterialTheme.typography.bodySmall)

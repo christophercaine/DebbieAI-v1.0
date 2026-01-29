@@ -15,9 +15,9 @@ import androidx.core.content.ContextCompat
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
 import com.debbiedoesdetails.app.data.local.ContactDatabase
-import com.debbiedoesdetails.app.data.remote.RetrofitClient
 import com.debbiedoesdetails.app.data.repository.ContactRepository
 import com.debbiedoesdetails.app.data.sync.ContactSyncService
+import com.debbiedoesdetails.app.ui.navigation.AppNavigation
 import com.debbiedoesdetails.app.ui.theme.DiddTheme
 import com.debbiedoesdetails.app.viewmodel.ContactViewModel
 import com.debbiedoesdetails.app.viewmodel.ContactViewModelFactory
@@ -38,25 +38,31 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        val database = ContactDatabase.getInstance(applicationContext)
-        val apiService = RetrofitClient.getApiService()
-        val repository = ContactRepository(database.contactDao(), apiService)
+        // Initialize database and repository
+        val database = ContactDatabase.getDatabase(applicationContext)
+        val repository = ContactRepository(database.contactDao(), database.addressDao())
         syncService = ContactSyncService(applicationContext, repository)
 
+        // Initialize ViewModel
         viewModel = ViewModelProvider(
             this,
             ContactViewModelFactory(repository)
         ).get(ContactViewModel::class.java)
 
+        // Request permissions
         requestContactsPermission()
 
+        // Set content
         setContent {
             DiddTheme {
                 Surface(
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background
                 ) {
-                    NavHost(viewModel = viewModel, onRefresh = { syncDeviceContacts() })
+                    AppNavigation(
+                        viewModel = viewModel,
+                        onRefresh = { syncDeviceContacts() }
+                    )
                 }
             }
         }

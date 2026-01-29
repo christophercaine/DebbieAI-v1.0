@@ -28,8 +28,8 @@ fun ContactDetailScreen(
     val emails = remember { mutableStateListOf(*contact.emails.toTypedArray()) }
     var company by remember { mutableStateOf(contact.company) }
     var jobTitle by remember { mutableStateOf(contact.jobTitle) }
-    var linkedIn by remember { mutableStateOf(contact.linkedIn) }
-    var twitter by remember { mutableStateOf(contact.twitter) }
+    var linkedIn by remember { mutableStateOf(contact.socialMedia["linkedin"] ?: "") }
+    var twitter by remember { mutableStateOf(contact.socialMedia["twitter"] ?: "") }
     var notes by remember { mutableStateOf(contact.notes) }
 
     Column(
@@ -175,14 +175,20 @@ fun ContactDetailScreen(
 
             Button(
                 onClick = {
+                    val updatedSocialMedia = mutableMapOf<String, String>()
+                    if (linkedIn.isNotEmpty()) {
+                        updatedSocialMedia["linkedin"] = linkedIn
+                    }
+                    if (twitter.isNotEmpty()) {
+                        updatedSocialMedia["twitter"] = twitter
+                    }
                     val updated = contact.copy(
                         name = name,
                         phones = phones.filter { it.isNotEmpty() },
                         emails = emails.filter { it.isNotEmpty() },
                         company = company,
                         jobTitle = jobTitle,
-                        linkedIn = linkedIn,
-                        twitter = twitter,
+                        socialMedia = updatedSocialMedia,
                         notes = notes
                     )
                     viewModel.updateContact(updated)

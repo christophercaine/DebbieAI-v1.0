@@ -6,7 +6,7 @@ import androidx.room.Room
 import androidx.room.RoomDatabase
 import androidx.room.TypeConverters
 
-@Database(entities = [Contact::class, Address::class], version = 3, exportSchema = false)
+@Database(entities = [Contact::class, Address::class], version = 4, exportSchema = false)
 @TypeConverters(Converters::class)
 abstract class ContactDatabase : RoomDatabase() {
     abstract fun contactDao(): ContactDao
@@ -14,15 +14,19 @@ abstract class ContactDatabase : RoomDatabase() {
 
     companion object {
         @Volatile
-        private var instance: ContactDatabase? = null
+        private var INSTANCE: ContactDatabase? = null
 
-        fun getInstance(context: Context): ContactDatabase {
-            return instance ?: synchronized(this) {
-                instance ?: Room.databaseBuilder(
+        fun getDatabase(context: Context): ContactDatabase {
+            return INSTANCE ?: synchronized(this) {
+                val instance = Room.databaseBuilder(
                     context.applicationContext,
                     ContactDatabase::class.java,
-                    "contacts_db"
-                ).fallbackToDestructiveMigration().build().also { instance = it }
+                    "contact_database"
+                )
+                    .fallbackToDestructiveMigration()
+                    .build()
+                INSTANCE = instance
+                instance
             }
         }
     }

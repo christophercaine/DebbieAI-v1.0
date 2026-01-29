@@ -3,7 +3,7 @@ package com.debbiedoesdetails.app.data.local
 import androidx.room.Entity
 import androidx.room.ForeignKey
 import androidx.room.PrimaryKey
-import java.util.UUID
+import java.time.LocalDateTime
 
 @Entity(
     tableName = "addresses",
@@ -17,9 +17,9 @@ import java.util.UUID
     ]
 )
 data class Address(
-    @PrimaryKey
-    val id: String = UUID.randomUUID().toString(),
-    val contactId: String,
+    @PrimaryKey(autoGenerate = true)
+    val id: Long = 0,
+    val contactId: Long,
     val street: String,
     val city: String,
     val state: String,
@@ -27,5 +27,8 @@ data class Address(
     val country: String = "USA",
     val addressType: String = "Home",
     val isPrimary: Boolean = false,
-    val createdAt: Long = System.currentTimeMillis()
+    val propertyDetails: String = "",
+    val notes: String = "",
+    val createdAt: LocalDateTime = LocalDateTime.now(),
+    val updatedAt: LocalDateTime = LocalDateTime.now()
 )

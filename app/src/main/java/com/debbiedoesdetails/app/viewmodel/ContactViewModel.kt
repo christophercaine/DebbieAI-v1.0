@@ -8,11 +8,11 @@ import com.debbiedoesdetails.app.data.repository.ContactRepository
 import kotlinx.coroutines.launch
 
 class ContactViewModel(private val repository: ContactRepository) : ViewModel() {
-    val contacts = repository.allContacts
+    val contacts = repository.getAllContacts()
 
     fun loadContacts() {
         viewModelScope.launch {
-            repository.allContactsSnapshot()
+            repository.getAllContacts()
         }
     }
 
@@ -43,16 +43,9 @@ class ContactViewModel(private val repository: ContactRepository) : ViewModel() 
         }
     }
 
-    fun mergeContacts(primary: Contact, duplicate: Contact) {
+    fun mergeContacts(primaryId: Long, duplicateId: Long) {
         viewModelScope.launch {
-            repository.mergeContacts(primary, duplicate)
-            loadContacts()
-        }
-    }
-
-    fun syncWithServer() {
-        viewModelScope.launch {
-            repository.syncWithServer()
+            repository.mergeContacts(primaryId, duplicateId)
             loadContacts()
         }
     }

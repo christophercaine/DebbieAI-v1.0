@@ -1,26 +1,54 @@
 package com.debbiedoesdetails.app.data.local
 
 import androidx.room.TypeConverter
+import com.google.gson.Gson
+import com.google.gson.reflect.TypeToken
 import java.time.LocalDateTime
+import java.time.format.DateTimeFormatter
 
 class Converters {
+    private val gson = Gson()
+    private val dateFormatter = DateTimeFormatter.ISO_LOCAL_DATE_TIME
+
     @TypeConverter
-    fun fromTimestamp(value: String?): LocalDateTime? {
-        return value?.let { LocalDateTime.parse(it) }
+    fun fromStringList(value: List<String>?): String {
+        return gson.toJson(value ?: emptyList<String>())
     }
 
     @TypeConverter
-    fun dateToTimestamp(date: LocalDateTime?): String? {
-        return date?.toString()
+    fun toStringList(value: String): List<String> {
+        return try {
+            gson.fromJson(value, object : TypeToken<List<String>>() {}.type) ?: emptyList()
+        } catch (e: Exception) {
+            emptyList()
+        }
     }
 
     @TypeConverter
-    fun fromStringList(value: String?): List<String>? {
-        return value?.split(",")
+    fun fromStringMap(value: Map<String, String>?): String {
+        return gson.toJson(value ?: emptyMap<String, String>())
     }
 
     @TypeConverter
-    fun toStringList(list: List<String>?): String? {
-        return list?.joinToString(",")
+    fun toStringMap(value: String): Map<String, String> {
+        return try {
+            gson.fromJson(value, object : TypeToken<Map<String, String>>() {}.type) ?: emptyMap()
+        } catch (e: Exception) {
+            emptyMap()
+        }
+    }
+
+    @TypeConverter
+    fun fromLocalDateTime(value: LocalDateTime?): String {
+        return value?.format(dateFormatter) ?: ""
+    }
+
+    @TypeConverter
+    fun toLocalDateTime(value: String): LocalDateTime {
+        return try {
+            LocalDateTime.parse(value, dateFormatter)
+        } catch (e: Exception) {
+            LocalDateTime.now()
+        }
     }
 }
