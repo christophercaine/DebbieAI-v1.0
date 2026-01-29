@@ -30,6 +30,7 @@ import com.debbiedoesdetails.app.R
 import com.debbiedoesdetails.app.data.local.Contact
 import com.debbiedoesdetails.app.viewmodel.ContactViewModel
 import com.debbiedoesdetails.app.viewmodel.SyncState
+<<<<<<< HEAD
 
 private val DebbieBlue = Color(0xFF1E5AA8)
 private val DebbieRed = Color(0xFFD32F2F)
@@ -44,6 +45,8 @@ private val TypeColors = mapOf(
     "Employee" to Color(0xFF00BCD4),
     "Personal" to Color(0xFF607D8B)
 )
+=======
+>>>>>>> 41058dd7158f42aed2e175c365a9de945491adce
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -102,6 +105,7 @@ fun ContactListScreen(
         }
     }
 
+<<<<<<< HEAD
     Scaffold(
         topBar = {
             Column {
@@ -132,6 +136,105 @@ fun ContactListScreen(
                 LazyRow(modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     item { FilterChip(selected = selectedType == null, onClick = { selectedType = null }, label = { Text("All") }, colors = FilterChipDefaults.filterChipColors(selectedContainerColor = DebbieBlue, selectedLabelColor = DebbieWhite)) }
                     items(contactTypes.keys.toList()) { type -> val count = contactTypes[type] ?: 0; FilterChip(selected = selectedType == type, onClick = { selectedType = if (selectedType == type) null else type }, label = { Text("$type ($count)") }, colors = FilterChipDefaults.filterChipColors(selectedContainerColor = TypeColors[type] ?: DebbieBlue, selectedLabelColor = DebbieWhite)) }
+=======
+    // Show snackbar for sync results
+    val snackbarHostState = remember { SnackbarHostState() }
+    
+    LaunchedEffect(syncState) {
+        when (val state = syncState) {
+            is SyncState.Success -> {
+                snackbarHostState.showSnackbar(
+                    message = "Synced: ${state.result.added} added, ${state.result.updated} updated"
+                )
+                viewModel.resetSyncState()
+            }
+            is SyncState.Error -> {
+                snackbarHostState.showSnackbar(
+                    message = "Sync failed: ${state.message}"
+                )
+                viewModel.resetSyncState()
+            }
+            else -> {}
+        }
+    }
+
+    Scaffold(
+        topBar = {
+            TopAppBar(
+                title = { Text("Contacts (${contacts.size})") },
+                actions = {
+                    // Duplicates button with badge
+                    IconButton(onClick = onDuplicatesClick) {
+                        BadgedBox(badge = {
+                            if (duplicateCount > 0) {
+                                Badge { Text(duplicateCount.toString()) }
+                            }
+                        }) {
+                            Icon(Icons.Filled.Warning, contentDescription = "Duplicates")
+                        }
+                    }
+                    
+                    // Sync button (shows loading state)
+                    IconButton(
+                        onClick = onSyncContacts,
+                        enabled = syncState !is SyncState.Syncing
+                    ) {
+                        if (syncState is SyncState.Syncing) {
+                            CircularProgressIndicator(
+                                modifier = Modifier.size(24.dp),
+                                strokeWidth = 2.dp
+                            )
+                        } else {
+                            Icon(Icons.Filled.Refresh, contentDescription = "Sync Contacts")
+                        }
+                    }
+                    
+                    // Add button
+                    IconButton(onClick = onAddClick) {
+                        Icon(Icons.Filled.Add, contentDescription = "Add Contact")
+                    }
+                }
+            )
+        },
+        snackbarHost = { SnackbarHost(snackbarHostState) }
+    ) { paddingValues ->
+        
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(paddingValues)
+        ) {
+            if (contacts.isEmpty()) {
+                Box(
+                    modifier = Modifier.fillMaxSize(),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        Text("No contacts yet")
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Button(onClick = onSyncContacts) {
+                            Text("Sync from Device")
+                        }
+                    }
+                }
+            } else {
+                LazyColumn(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(horizontal = 8.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp),
+                    contentPadding = PaddingValues(vertical = 8.dp)
+                ) {
+                    items(
+                        items = contacts.filter { !it.isDuplicate },
+                        key = { it.id }
+                    ) { contact ->
+                        ContactListItem(
+                            contact = contact,
+                            onClick = { onContactClick(contact) }
+                        )
+                    }
+>>>>>>> 41058dd7158f42aed2e175c365a9de945491adce
                 }
             }
             Spacer(modifier = Modifier.height(4.dp))
@@ -145,6 +248,7 @@ fun ContactListScreen(
 }
 
 @Composable
+<<<<<<< HEAD
 fun ContactListItem(contact: Contact, onClick: () -> Unit) {
     val typeColor = TypeColors[contact.contactType] ?: Color.Gray
     val isVIP = contact.notes.lowercase().contains("vip") || contact.notes.lowercase().contains("important")
@@ -161,6 +265,70 @@ fun ContactListItem(contact: Contact, onClick: () -> Unit) {
                 Surface(color = typeColor, shape = MaterialTheme.shapes.small) { Text(text = contact.contactType.take(4).uppercase(), modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp), style = MaterialTheme.typography.labelSmall, color = DebbieWhite, fontWeight = FontWeight.Bold) }
                 if (contact.isDuplicate) { Surface(color = DebbieRed.copy(alpha = 0.1f), shape = MaterialTheme.shapes.small) { Text(text = "DUP", modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp), style = MaterialTheme.typography.labelSmall, color = DebbieRed, fontWeight = FontWeight.Bold) } }
                 if (contact.isPlaceholder) { Surface(color = Color.Gray.copy(alpha = 0.1f), shape = MaterialTheme.shapes.small) { Text(text = "TEMP", modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp), style = MaterialTheme.typography.labelSmall, color = Color.Gray) } }
+=======
+fun ContactListItem(
+    contact: Contact,
+    onClick: () -> Unit
+) {
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable { onClick() }
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(12.dp)
+        ) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        text = contact.name,
+                        style = MaterialTheme.typography.titleMedium
+                    )
+                    
+                    if (contact.company.isNotEmpty()) {
+                        Text(
+                            text = contact.company,
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                    
+                    if (contact.phones.isNotEmpty()) {
+                        Text(
+                            text = contact.phones.first(),
+                            style = MaterialTheme.typography.bodySmall
+                        )
+                    }
+                    
+                    if (contact.emails.isNotEmpty()) {
+                        Text(
+                            text = contact.emails.first(),
+                            style = MaterialTheme.typography.bodySmall
+                        )
+                    }
+                }
+                
+                if (contact.isDuplicate) {
+                    Surface(
+                        color = MaterialTheme.colorScheme.errorContainer,
+                        shape = MaterialTheme.shapes.small,
+                        modifier = Modifier.padding(start = 8.dp)
+                    ) {
+                        Text(
+                            text = "DUP",
+                            modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp),
+                            style = MaterialTheme.typography.labelSmall,
+                            color = MaterialTheme.colorScheme.onErrorContainer
+                        )
+                    }
+                }
+>>>>>>> 41058dd7158f42aed2e175c365a9de945491adce
             }
         }
     }

@@ -4,18 +4,25 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+<<<<<<< HEAD
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
+=======
+import androidx.compose.foundation.rememberScrollState
+>>>>>>> 41058dd7158f42aed2e175c365a9de945491adce
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Close
+<<<<<<< HEAD
 import androidx.compose.material.icons.filled.Star
+=======
+>>>>>>> 41058dd7158f42aed2e175c365a9de945491adce
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -91,11 +98,19 @@ fun AddContactScreen(viewModel: ContactViewModel, onBackClick: () -> Unit) {
     var company by remember { mutableStateOf("") }
     var jobTitle by remember { mutableStateOf("") }
     var notes by remember { mutableStateOf("") }
+<<<<<<< HEAD
     var phones by remember { mutableStateOf(listOf("")) }
     var emails by remember { mutableStateOf(listOf("")) }
     var contactType by remember { mutableStateOf("Personal") }
     var selectedTags by remember { mutableStateOf(setOf<String>()) }
     var customTagInput by remember { mutableStateOf("") }
+=======
+    
+    // Multiple phones and emails
+    var phones by remember { mutableStateOf(listOf("")) }
+    var emails by remember { mutableStateOf(listOf("")) }
+    
+>>>>>>> 41058dd7158f42aed2e175c365a9de945491adce
     var isLoading by remember { mutableStateOf(false) }
     var showAutoDetect by remember { mutableStateOf(false) }
 
@@ -121,6 +136,7 @@ fun AddContactScreen(viewModel: ContactViewModel, onBackClick: () -> Unit) {
         topBar = {
             TopAppBar(
                 title = { Text("Add Contact") },
+<<<<<<< HEAD
                 navigationIcon = { IconButton(onClick = onBackClick) { Icon(Icons.Filled.ArrowBack, contentDescription = "Back") } },
                 actions = { TextButton(onClick = { saveContact() }, enabled = name.isNotBlank() && !isLoading) { Text("Save", color = Color.White) } },
                 colors = TopAppBarDefaults.topAppBarColors(containerColor = DebbieBlue, titleContentColor = Color.White, navigationIconContentColor = Color.White)
@@ -280,6 +296,242 @@ fun AddContactScreen(viewModel: ContactViewModel, onBackClick: () -> Unit) {
                 if (isLoading) CircularProgressIndicator(modifier = Modifier.size(24.dp), color = Color.White) else Text("Save Contact")
             }
             
+=======
+                navigationIcon = {
+                    IconButton(onClick = onBackClick) {
+                        Icon(Icons.Filled.ArrowBack, contentDescription = "Back")
+                    }
+                },
+                actions = {
+                    TextButton(
+                        onClick = {
+                            if (name.isNotBlank()) {
+                                isLoading = true
+                                viewModel.addContact(
+                                    name = name,
+                                    phones = phones.filter { it.isNotBlank() },
+                                    emails = emails.filter { it.isNotBlank() },
+                                    company = company,
+                                    jobTitle = jobTitle,
+                                    notes = notes
+                                )
+                                onBackClick()
+                            }
+                        },
+                        enabled = name.isNotBlank() && !isLoading
+                    ) {
+                        Text("Save")
+                    }
+                }
+            )
+        }
+    ) { paddingValues ->
+        
+        Column(
+            modifier = Modifier
+                .padding(paddingValues)
+                .fillMaxSize()
+                .verticalScroll(rememberScrollState())
+                .padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp)
+        ) {
+            // Name (required)
+            OutlinedTextField(
+                value = name,
+                onValueChange = { name = it },
+                label = { Text("Name *") },
+                modifier = Modifier.fillMaxWidth(),
+                enabled = !isLoading,
+                singleLine = true
+            )
+
+            Divider()
+
+            // Phone numbers section
+            Text(
+                text = "Phone Numbers",
+                style = MaterialTheme.typography.titleSmall,
+                color = MaterialTheme.colorScheme.primary
+            )
+            
+            phones.forEachIndexed { index, phone ->
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    OutlinedTextField(
+                        value = phone,
+                        onValueChange = { newValue ->
+                            phones = phones.toMutableList().apply { 
+                                this[index] = newValue 
+                            }
+                        },
+                        label = { Text("Phone ${index + 1}") },
+                        modifier = Modifier.weight(1f),
+                        enabled = !isLoading,
+                        singleLine = true
+                    )
+                    
+                    if (phones.size > 1) {
+                        IconButton(
+                            onClick = {
+                                phones = phones.toMutableList().apply { 
+                                    removeAt(index) 
+                                }
+                            }
+                        ) {
+                            Icon(
+                                Icons.Filled.Close,
+                                contentDescription = "Remove phone",
+                                tint = MaterialTheme.colorScheme.error
+                            )
+                        }
+                    }
+                }
+            }
+            
+            TextButton(
+                onClick = { phones = phones + "" }
+            ) {
+                Icon(Icons.Filled.Add, contentDescription = null)
+                Spacer(modifier = Modifier.width(4.dp))
+                Text("Add Phone")
+            }
+
+            Divider()
+
+            // Email addresses section
+            Text(
+                text = "Email Addresses",
+                style = MaterialTheme.typography.titleSmall,
+                color = MaterialTheme.colorScheme.primary
+            )
+            
+            emails.forEachIndexed { index, email ->
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    OutlinedTextField(
+                        value = email,
+                        onValueChange = { newValue ->
+                            emails = emails.toMutableList().apply { 
+                                this[index] = newValue 
+                            }
+                        },
+                        label = { Text("Email ${index + 1}") },
+                        modifier = Modifier.weight(1f),
+                        enabled = !isLoading,
+                        singleLine = true
+                    )
+                    
+                    if (emails.size > 1) {
+                        IconButton(
+                            onClick = {
+                                emails = emails.toMutableList().apply { 
+                                    removeAt(index) 
+                                }
+                            }
+                        ) {
+                            Icon(
+                                Icons.Filled.Close,
+                                contentDescription = "Remove email",
+                                tint = MaterialTheme.colorScheme.error
+                            )
+                        }
+                    }
+                }
+            }
+            
+            TextButton(
+                onClick = { emails = emails + "" }
+            ) {
+                Icon(Icons.Filled.Add, contentDescription = null)
+                Spacer(modifier = Modifier.width(4.dp))
+                Text("Add Email")
+            }
+
+            Divider()
+
+            // Company info
+            Text(
+                text = "Work",
+                style = MaterialTheme.typography.titleSmall,
+                color = MaterialTheme.colorScheme.primary
+            )
+            
+            OutlinedTextField(
+                value = company,
+                onValueChange = { company = it },
+                label = { Text("Company") },
+                modifier = Modifier.fillMaxWidth(),
+                enabled = !isLoading,
+                singleLine = true
+            )
+            
+            OutlinedTextField(
+                value = jobTitle,
+                onValueChange = { jobTitle = it },
+                label = { Text("Job Title") },
+                modifier = Modifier.fillMaxWidth(),
+                enabled = !isLoading,
+                singleLine = true
+            )
+
+            Divider()
+
+            // Notes
+            Text(
+                text = "Notes",
+                style = MaterialTheme.typography.titleSmall,
+                color = MaterialTheme.colorScheme.primary
+            )
+            
+            OutlinedTextField(
+                value = notes,
+                onValueChange = { notes = it },
+                label = { Text("Notes") },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(120.dp),
+                enabled = !isLoading,
+                maxLines = 5
+            )
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            // Save button
+            Button(
+                onClick = {
+                    if (name.isNotBlank()) {
+                        isLoading = true
+                        viewModel.addContact(
+                            name = name,
+                            phones = phones.filter { it.isNotBlank() },
+                            emails = emails.filter { it.isNotBlank() },
+                            company = company,
+                            jobTitle = jobTitle,
+                            notes = notes
+                        )
+                        onBackClick()
+                    }
+                },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(48.dp),
+                enabled = name.isNotBlank() && !isLoading
+            ) {
+                if (isLoading) {
+                    CircularProgressIndicator(
+                        modifier = Modifier.size(24.dp),
+                        color = MaterialTheme.colorScheme.onPrimary
+                    )
+                } else {
+                    Text("Save Contact")
+                }
+            }
+            
+>>>>>>> 41058dd7158f42aed2e175c365a9de945491adce
             Spacer(modifier = Modifier.height(32.dp))
         }
     }

@@ -11,12 +11,16 @@ import com.debbiedoesdetails.app.data.sync.SyncResult
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+<<<<<<< HEAD
 import kotlinx.coroutines.flow.first
+=======
+>>>>>>> 41058dd7158f42aed2e175c365a9de945491adce
 import kotlinx.coroutines.launch
 import java.time.LocalDateTime
 
 class ContactViewModel(
     private val repository: ContactRepository,
+<<<<<<< HEAD
     private val syncService: ContactSyncService,
     private val aiService: AIService = AIService()
 ) : ViewModel() {
@@ -47,6 +51,29 @@ class ContactViewModel(
     private val _isSmartSearch = MutableStateFlow(true)
     val isSmartSearch: StateFlow<Boolean> = _isSmartSearch.asStateFlow()
 
+=======
+    private val syncService: ContactSyncService
+) : ViewModel() {
+
+    // All contacts (as Flow for automatic UI updates)
+    val contacts = repository.getAllContacts()
+    
+    // Duplicate contacts
+    val duplicates = repository.getDuplicates()
+    
+    // Sync state
+    private val _syncState = MutableStateFlow<SyncState>(SyncState.Idle)
+    val syncState: StateFlow<SyncState> = _syncState.asStateFlow()
+    
+    // Search query
+    private val _searchQuery = MutableStateFlow("")
+    val searchQuery: StateFlow<String> = _searchQuery.asStateFlow()
+    
+    // Search results
+    private val _searchResults = MutableStateFlow<List<Contact>>(emptyList())
+    val searchResults: StateFlow<List<Contact>> = _searchResults.asStateFlow()
+
+>>>>>>> 41058dd7158f42aed2e175c365a9de945491adce
     /**
      * Sync contacts from device
      */
@@ -56,8 +83,11 @@ class ContactViewModel(
             try {
                 val result = syncService.syncDeviceContacts()
                 _syncState.value = if (result.success) {
+<<<<<<< HEAD
                     // After sync, analyze new contacts with AI
                     analyzeAllContactsInBackground()
+=======
+>>>>>>> 41058dd7158f42aed2e175c365a9de945491adce
                     SyncState.Success(result)
                 } else {
                     SyncState.Error(result.error ?: "Unknown error")
@@ -84,9 +114,13 @@ class ContactViewModel(
         emails: List<String> = emptyList(),
         company: String = "",
         jobTitle: String = "",
+<<<<<<< HEAD
         notes: String = "",
         category: String = ContactCategory.PERSONAL,
         tags: List<String> = emptyList()
+=======
+        notes: String = ""
+>>>>>>> 41058dd7158f42aed2e175c365a9de945491adce
     ) {
         viewModelScope.launch {
             val contact = Contact(
@@ -95,6 +129,7 @@ class ContactViewModel(
                 emails = emails.filter { it.isNotEmpty() },
                 company = company,
                 jobTitle = jobTitle,
+<<<<<<< HEAD
                 notes = notes,
                 category = category,
                 tags = tags
@@ -103,6 +138,11 @@ class ContactViewModel(
             
             // Analyze the new contact with AI
             analyzeContactInBackground(id)
+=======
+                notes = notes
+            )
+            repository.addContact(contact)
+>>>>>>> 41058dd7158f42aed2e175c365a9de945491adce
         }
     }
     
@@ -124,7 +164,11 @@ class ContactViewModel(
     fun updateContact(contact: Contact) {
         viewModelScope.launch {
             repository.updateContact(contact.copy(
+<<<<<<< HEAD
                 updatedAt = LocalDateTime.now()
+=======
+                updatedAt = java.time.LocalDateTime.now()
+>>>>>>> 41058dd7158f42aed2e175c365a9de945491adce
             ))
         }
     }
@@ -157,8 +201,12 @@ class ContactViewModel(
                 repository.updateContact(contact.copy(
                     isDuplicate = false,
                     isDuplicateOf = null,
+<<<<<<< HEAD
                     duplicateConfidence = 0f,
                     updatedAt = LocalDateTime.now()
+=======
+                    updatedAt = java.time.LocalDateTime.now()
+>>>>>>> 41058dd7158f42aed2e175c365a9de945491adce
                 ))
             }
         }
@@ -172,19 +220,27 @@ class ContactViewModel(
     }
     
     /**
+<<<<<<< HEAD
      * Smart search contacts - uses AI for natural language queries
+=======
+     * Search contacts
+>>>>>>> 41058dd7158f42aed2e175c365a9de945491adce
      */
     fun searchContacts(query: String) {
         _searchQuery.value = query
         viewModelScope.launch {
             if (query.isBlank()) {
                 _searchResults.value = emptyList()
+<<<<<<< HEAD
             } else if (_isSmartSearch.value) {
                 // Use AI-powered smart search
                 val allContacts = contacts.first()
                 _searchResults.value = aiService.parseSearchQuery(query, allContacts)
             } else {
                 // Use basic search
+=======
+            } else {
+>>>>>>> 41058dd7158f42aed2e175c365a9de945491adce
                 repository.searchContacts(query).collect { results ->
                     _searchResults.value = results
                 }
@@ -193,6 +249,7 @@ class ContactViewModel(
     }
     
     /**
+<<<<<<< HEAD
      * Toggle smart search mode
      */
     fun toggleSmartSearch() {
@@ -200,12 +257,15 @@ class ContactViewModel(
     }
     
     /**
+=======
+>>>>>>> 41058dd7158f42aed2e175c365a9de945491adce
      * Clear search
      */
     fun clearSearch() {
         _searchQuery.value = ""
         _searchResults.value = emptyList()
     }
+<<<<<<< HEAD
     
     // ===== AI Features =====
     
@@ -440,6 +500,8 @@ class ContactViewModel(
     fun resetAIState() {
         _aiState.value = AIState.Idle
     }
+=======
+>>>>>>> 41058dd7158f42aed2e175c365a9de945491adce
 }
 
 /**
@@ -450,6 +512,7 @@ sealed class SyncState {
     object Syncing : SyncState()
     data class Success(val result: SyncResult) : SyncState()
     data class Error(val message: String) : SyncState()
+<<<<<<< HEAD
 }
 
 /**
@@ -461,3 +524,6 @@ sealed class AIState {
     data class Success(val message: String) : AIState()
     data class Error(val message: String) : AIState()
 }
+=======
+}
+>>>>>>> 41058dd7158f42aed2e175c365a9de945491adce
