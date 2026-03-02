@@ -2,10 +2,12 @@
 # Android Build Files
 # ========================================
 *.iml
-**/.gradle/
-**/.kotlin/
-local.properties
-**/build/
+.gradle/
+.kotlin/
+/local.properties
+/build/
+/app/build/
+/*/build/
 /captures
 .externalNativeBuild/
 .cxx/
@@ -16,20 +18,33 @@ local.properties
 # ========================================
 # IDE Files (Android Studio / IntelliJ)
 # ========================================
-**/.idea/
+/.idea/
 *.iws
+.idea/workspace.xml
+.idea/tasks.xml
+.idea/gradle.xml
+.idea/assetWizardSettings.xml
+.idea/dictionaries
+.idea/libraries
+.idea/caches
+.idea/modules.xml
+.idea/.name
+.idea/compiler.xml
+.idea/misc.xml
+.idea/jarRepositories.xml
 
 # ========================================
 # Logs and Diagnostics
 # ========================================
 *.log
-hs_err_pid*
-replay_pid*
-build_debug.txt
-build_error.txt
-build_error_full.txt
-build_log.txt
-build_log_stack.txt
+*.txt
+build*.log
+debug*.log
+diagnostic*.log
+all-logs.txt
+build-*.log
+*-error.log
+*-output.txt
 
 # ========================================
 # Secrets and Keys
@@ -57,9 +72,5 @@ desktop.ini
 # ========================================
 # Local Configuration
 # ========================================
+local.properties
 gradle.properties.local
-
-# ========================================
-# Gemini / Agent Artifacts
-# ========================================
-.gemini/

@@ -1,0 +1,38 @@
+{
+  "project_info": {
+    "project_number": "440530190547",
+    "project_id": "debbie-does-details",
+    "storage_bucket": "debbie-does-details.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:440530190547:android:6513316c907b1982",
+        "android_client_info": {
+          "package_name": "com.debbiedoesit.antigravity"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "440530190547-igcdobv2ttfv66c10nd51dvd51ppndoj.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.debbiedoesit.antigravity",
+            "certificate_hash": "6513316C907B1982CF73DF9B2D90A9C7B01011AB"
+          }
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "YOUR_API_KEY"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

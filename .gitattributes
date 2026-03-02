@@ -1,0 +1,2 @@
+DebbieAI/app/src/main/assets/*.bin filter=lfs diff=lfs merge=lfs -text
+DebbieAI/app/openJdk-25/lib/modules filter=lfs diff=lfs merge=lfs -text
