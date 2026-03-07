@@ -19,6 +19,10 @@ android {
         versionName = "1.0"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 
+        ndk {
+            abiFilters.addAll(listOf("armeabi-v7a", "arm64-v8a"))
+        }
+
         javaCompileOptions {
             annotationProcessorOptions {
                 arguments["room.schemaLocation"] = "$projectDir/schemas"
@@ -49,7 +53,7 @@ android {
 
     packaging {
         jniLibs {
-            useLegacyPackaging = false
+            useLegacyPackaging = true
         }
         resources {
             excludes += "/META-INF/{AL2.0,LGPL2.1}"
@@ -129,12 +133,13 @@ dependencies {
     // Antigravity v2.0 Core AI & Media
     implementation(libs.mediapipeGenai)
     implementation(libs.mediapipeVision)
-    // implementation(libs.ffmpegKit)
+    implementation(libs.ffmpegKit)
     implementation(libs.mlkitObject)
     implementation(libs.mlkitText)
     implementation(libs.arcore)
     implementation(libs.itext7)
     implementation(libs.androidxDatastore)
+    implementation(libs.sceneviewAr)
 
     // ML Kit Coroutine support (for .await())
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-play-services:1.7.3")

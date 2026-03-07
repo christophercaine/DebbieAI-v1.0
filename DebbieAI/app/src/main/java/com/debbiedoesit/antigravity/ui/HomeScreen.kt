@@ -21,6 +21,7 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
@@ -55,15 +56,6 @@ fun HomeScreen(tier: DeviceTier, onNavigate: (String) -> Unit) {
         val items =
                 listOf(
                         DashboardItem(
-                                "AI Chat",
-                                "Ask Debbie anything",
-                                Icons.Default.Chat,
-                                R.drawable.debbieai_logo,
-                                null,
-                                "chat",
-                                Color(0xFF6C63FF)
-                        ),
-                        DashboardItem(
                                 "Job Photos",
                                 "Capture & analyze",
                                 Icons.Default.CameraAlt,
@@ -85,7 +77,7 @@ fun HomeScreen(tier: DeviceTier, onNavigate: (String) -> Unit) {
                                 "Measurements",
                                 "AR + depth sensing",
                                 Icons.Default.Straighten,
-                                null,
+                                R.drawable.ic_measurements_new,
                                 DeviceFeature.DEPTH_MEASUREMENT,
                                 "measure",
                                 Color(0xFF4CAF50)
@@ -94,7 +86,7 @@ fun HomeScreen(tier: DeviceTier, onNavigate: (String) -> Unit) {
                                 "Video Tools",
                                 "Timelapse & reels",
                                 Icons.Default.Videocam,
-                                null,
+                                R.drawable.ic_video_new,
                                 DeviceFeature.FFMPEG_VIDEO,
                                 "video",
                                 Color(0xFFFF5722)
@@ -103,7 +95,7 @@ fun HomeScreen(tier: DeviceTier, onNavigate: (String) -> Unit) {
                                 "Marketing",
                                 "Social content AI",
                                 Icons.Default.AutoAwesome,
-                                null,
+                                R.drawable.ic_marketing_new,
                                 DeviceFeature.STYLE_TRANSFER,
                                 "marketing",
                                 Color(0xFFE91E63)
@@ -116,24 +108,6 @@ fun HomeScreen(tier: DeviceTier, onNavigate: (String) -> Unit) {
                                 DeviceFeature.FLOOR_PLAN_AI,
                                 "floor_plan",
                                 Color(0xFFFF9800)
-                        ),
-                        DashboardItem(
-                                "Details",
-                                "Tasks & calendar",
-                                Icons.Default.Checklist,
-                                R.drawable.debdetailslogo,
-                                null,
-                                "details",
-                                Color(0xFF9C27B0)
-                        ),
-                        DashboardItem(
-                                "Data",
-                                "Business insights",
-                                Icons.Default.Insights,
-                                R.drawable.debdatalogo,
-                                null,
-                                "data",
-                                Color(0xFF009688)
                         )
                 )
 
@@ -197,104 +171,120 @@ fun HomeScreen(tier: DeviceTier, onNavigate: (String) -> Unit) {
 
 @Composable
 fun DebbieHeader(isOffline: Boolean, tier: DeviceTier) {
+        val configuration = LocalConfiguration.current
+        val screenHeight = configuration.screenHeightDp.dp
+        val headerHeight = screenHeight / 3
+
         Box(
                 modifier =
                         Modifier.fillMaxWidth()
+                                .height(headerHeight)
                                 .background(
-                                        Brush.horizontalGradient(
+                                        Brush.verticalGradient(
                                                 colors =
-                                                        listOf(Color(0xFF1A1A2E), Color(0xFF16213E))
+                                                        listOf(Color(0xFF1A1A2E), Color(0xFF121212))
                                         )
                                 )
-                                .padding(horizontal = 16.dp, vertical = 12.dp)
         ) {
-                Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        modifier = Modifier.fillMaxWidth()
+                Column(
+                        modifier = Modifier.fillMaxSize(),
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.Center
                 ) {
-                        // Main logo
+                        // Main ecosystem logo
                         Image(
-                                painter = painterResource(id = R.drawable.logo_main),
-                                contentDescription = "Antigravity Logo",
-                                modifier = Modifier.height(44.dp).wrapContentWidth(),
+                                painter = painterResource(id = R.drawable.debbie_ecosystem),
+                                contentDescription = "Debbie Ecosystem Logo",
+                                modifier = Modifier.fillMaxHeight(0.75f).fillMaxWidth(1f),
                                 contentScale = ContentScale.Fit
                         )
 
-                        Spacer(modifier = Modifier.weight(1f))
+                        Spacer(modifier = Modifier.height(12.dp))
 
-                        // Offline badge
-                        if (isOffline) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                                // Tier chip
                                 Surface(
-                                        shape = RoundedCornerShape(6.dp),
-                                        color = Color(0xFFFF5252).copy(alpha = 0.2f),
-                                        modifier = Modifier.padding(end = 8.dp)
+                                        shape = RoundedCornerShape(4.dp),
+                                        color =
+                                                when (tier) {
+                                                        DeviceTier.PRO ->
+                                                                Color(0xFF6C63FF)
+                                                                        .copy(alpha = 0.25f)
+                                                        DeviceTier.STANDARD ->
+                                                                Color(0xFF4CAF50)
+                                                                        .copy(alpha = 0.25f)
+                                                        DeviceTier.LITE ->
+                                                                Color(0xFF9E9E9E)
+                                                                        .copy(alpha = 0.25f)
+                                                }
                                 ) {
-                                        Row(
-                                                verticalAlignment = Alignment.CenterVertically,
+                                        Text(
+                                                text = "⚡ ${tier.name} TIER",
+                                                color =
+                                                        when (tier) {
+                                                                DeviceTier.PRO -> Color(0xFF9C94FF)
+                                                                DeviceTier.STANDARD ->
+                                                                        Color(0xFF81C784)
+                                                                DeviceTier.LITE -> Color(0xFFBDBDBD)
+                                                        },
+                                                style = MaterialTheme.typography.labelSmall,
+                                                fontWeight = FontWeight.Bold,
                                                 modifier =
                                                         Modifier.padding(
-                                                                horizontal = 8.dp,
-                                                                vertical = 4.dp
+                                                                horizontal = 6.dp,
+                                                                vertical = 2.dp
                                                         )
+                                        )
+                                }
+
+                                if (isOffline) {
+                                        Spacer(modifier = Modifier.width(8.dp))
+                                        Surface(
+                                                shape = RoundedCornerShape(6.dp),
+                                                color = Color(0xFFFF5252).copy(alpha = 0.2f)
                                         ) {
-                                                Icon(
-                                                        Icons.Default.WifiOff,
-                                                        contentDescription = null,
-                                                        tint = Color(0xFFFF5252),
-                                                        modifier = Modifier.size(12.dp)
-                                                )
-                                                Spacer(modifier = Modifier.width(4.dp))
-                                                Text(
-                                                        "OFFLINE",
-                                                        color = Color(0xFFFF5252),
-                                                        style = MaterialTheme.typography.labelSmall,
-                                                        fontWeight = FontWeight.Bold
-                                                )
+                                                Row(
+                                                        verticalAlignment =
+                                                                Alignment.CenterVertically,
+                                                        modifier =
+                                                                Modifier.padding(
+                                                                        horizontal = 8.dp,
+                                                                        vertical = 4.dp
+                                                                )
+                                                ) {
+                                                        Icon(
+                                                                Icons.Default.WifiOff,
+                                                                contentDescription = null,
+                                                                tint = Color(0xFFFF5252),
+                                                                modifier = Modifier.size(12.dp)
+                                                        )
+                                                        Spacer(modifier = Modifier.width(4.dp))
+                                                        Text(
+                                                                "OFFLINE",
+                                                                color = Color(0xFFFF5252),
+                                                                style =
+                                                                        MaterialTheme.typography
+                                                                                .labelSmall,
+                                                                fontWeight = FontWeight.Bold
+                                                        )
+                                                }
                                         }
                                 }
                         }
-
-                        // Debbie avatar
-                        Image(
-                                painter = painterResource(id = R.drawable.debbie_illustration),
-                                contentDescription = "Debbie AI",
-                                modifier =
-                                        Modifier.size(44.dp)
-                                                .clip(CircleShape)
-                                                .shadow(4.dp, CircleShape),
-                                contentScale = ContentScale.Crop
-                        )
                 }
 
-                // Tier chip at bottom
-                Row(modifier = Modifier.align(Alignment.BottomEnd).padding(top = 48.dp)) {
-                        Surface(
-                                shape = RoundedCornerShape(4.dp),
-                                color =
-                                        when (tier) {
-                                                DeviceTier.PRO ->
-                                                        Color(0xFF6C63FF).copy(alpha = 0.25f)
-                                                DeviceTier.STANDARD ->
-                                                        Color(0xFF4CAF50).copy(alpha = 0.25f)
-                                                DeviceTier.LITE ->
-                                                        Color(0xFF9E9E9E).copy(alpha = 0.25f)
-                                        }
-                        ) {
-                                Text(
-                                        text = "⚡ ${tier.name} TIER",
-                                        color =
-                                                when (tier) {
-                                                        DeviceTier.PRO -> Color(0xFF9C94FF)
-                                                        DeviceTier.STANDARD -> Color(0xFF81C784)
-                                                        DeviceTier.LITE -> Color(0xFFBDBDBD)
-                                                },
-                                        style = MaterialTheme.typography.labelSmall,
-                                        fontWeight = FontWeight.Bold,
-                                        modifier =
-                                                Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
-                                )
-                        }
-                }
+                // Small Debbie avatar in corner for continuity
+                Image(
+                        painter = painterResource(id = R.drawable.debbie_illustration),
+                        contentDescription = "Debbie AI",
+                        modifier =
+                                Modifier.padding(16.dp)
+                                        .size(32.dp)
+                                        .align(Alignment.TopEnd)
+                                        .clip(CircleShape)
+                                        .shadow(4.dp, CircleShape),
+                        contentScale = ContentScale.Crop
+                )
         }
 }
 
@@ -459,12 +449,18 @@ fun FeatureCard(item: DashboardItem, isEnabled: Boolean, onClick: () -> Unit) {
 }
 
 @Composable
-fun FeaturePlaceholder(name: String) {
-        Box(
-                modifier = Modifier.fillMaxSize().background(Color(0xFF121212)),
-                contentAlignment = Alignment.Center
-        ) {
-                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+fun FeaturePlaceholder(name: String, onBack: () -> Unit = {}) {
+        Box(modifier = Modifier.fillMaxSize().background(Color(0xFF121212))) {
+                IconButton(
+                        onClick = onBack,
+                        modifier = Modifier.padding(16.dp).align(Alignment.TopStart)
+                ) { Icon(Icons.Default.ArrowBack, contentDescription = "Back", tint = Color.White) }
+
+                Column(
+                        modifier = Modifier.fillMaxSize(),
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.Center
+                ) {
                         Icon(
                                 Icons.Default.Build,
                                 contentDescription = null,

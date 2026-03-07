@@ -22,12 +22,13 @@ ksp = "2.3.2"
 coil = "2.6.0"
 # Antigravity v2.0 Versions
 mediapipe = "0.10.32"
-ffmpeg = "4.5.1-1.LTS"
+ffmpeg = "2.1.0"
 mlkit-object = "17.0.1"
 mlkit-text = "16.0.0"
 arcore = "1.41.0"
 itext = "7.2.5"
 datastore = "1.0.0"
+sceneview = "2.2.1"
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
@@ -58,12 +59,13 @@ coil-compose = { group = "io.coil-kt", name = "coil-compose", version.ref = "coi
 # Antigravity v2.0 Libraries
 mediapipeGenai = { group = "com.google.mediapipe", name = "tasks-genai", version.ref = "mediapipe" }
 mediapipeVision = { group = "com.google.mediapipe", name = "tasks-vision", version.ref = "mediapipe" }
-ffmpegKit = { group = "com.arthenica", name = "ffmpeg-kit-min-gpl", version.ref = "ffmpeg" }
+ffmpegKit = { group = "com.antonkarpenko", name = "ffmpeg-kit-min-gpl", version.ref = "ffmpeg" }
 mlkitObject = { group = "com.google.mlkit", name = "object-detection", version.ref = "mlkit-object" }
 mlkitText = { group = "com.google.mlkit", name = "text-recognition", version.ref = "mlkit-text" }
 arcore = { group = "com.google.ar", name = "core", version.ref = "arcore" }
 itext7 = { group = "com.itextpdf", name = "itext7-core", version.ref = "itext" }
 androidxDatastore = { group = "androidx.datastore", name = "datastore-preferences", version.ref = "datastore" }
+sceneviewAr = { group = "io.github.sceneview", name = "arsceneview", version.ref = "sceneview" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }

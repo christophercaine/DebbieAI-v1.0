@@ -96,6 +96,7 @@ app.delete("/api/contacts/:id", async (req, res) => {
 
 async function initializeDatabase() {
   try {
+    // Expand contacts table
     await pool.query(`
       CREATE TABLE IF NOT EXISTS contacts (
         id BIGSERIAL PRIMARY KEY,
@@ -105,18 +106,96 @@ async function initializeDatabase() {
         company VARCHAR(255),
         job_title VARCHAR(255),
         notes TEXT,
+        address TEXT,
+        social_media JSONB DEFAULT '{}',
+        occupation VARCHAR(255),
+        income_level VARCHAR(255),
+        assets TEXT,
+        last_ai_source_at TIMESTAMP,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       );
       
       CREATE INDEX IF NOT EXISTS idx_contacts_name ON contacts(name);
       CREATE INDEX IF NOT EXISTS idx_contacts_created_at ON contacts(created_at);
+
+      CREATE TABLE IF NOT EXISTS interactions (
+        id BIGSERIAL PRIMARY KEY,
+        contact_id BIGINT REFERENCES contacts(id) ON DELETE CASCADE,
+        timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        type VARCHAR(50),
+        summary TEXT,
+        sentiment VARCHAR(20),
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      );
+
+      CREATE INDEX IF NOT EXISTS idx_interactions_contact_id ON interactions(contact_id);
+      CREATE INDEX IF NOT EXISTS idx_interactions_timestamp ON interactions(timestamp);
     `);
     console.log("✅ Database tables initialized");
   } catch (error) {
     console.error("❌ Error initializing database:", error);
   }
 }
+
+// Interaction Endpoints
+app.get("/api/contacts/:id/interactions", async (req, res) => {
+  try {
+    const { id } = req.params;
+    const result = await pool.query(
+      "SELECT * FROM interactions WHERE contact_id = $1 ORDER BY timestamp DESC",
+      [id]
+    );
+    res.json(result.rows);
+  } catch (error) {
+    console.error("Error fetching interactions:", error);
+    res.status(500).json({ error: "Failed to fetch interactions" });
+  }
+});
+
+app.post("/api/contacts/:id/interactions", async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { type, summary, sentiment } = req.body;
+    const result = await pool.query(
+      "INSERT INTO interactions (contact_id, type, summary, sentiment) VALUES ($1, $2, $3, $4) RETURNING *",
+      [id, type, summary, sentiment || "neutral"]
+    );
+    res.status(201).json(result.rows[0]);
+  } catch (error) {
+    console.error("Error creating interaction:", error);
+    res.status(500).json({ error: "Failed to create interaction" });
+  }
+});
+
+// Sourcing Stub
+app.post("/api/contacts/:id/source-info", async (req, res) => {
+  try {
+    const { id } = req.params;
+    // For now, this is a stub that simulates finding information.
+    // In a final version, this could trigger a background worker that searches the web.
+    const mockUpdate = {
+      social_media: { linkedin: "https://linkedin.com/in/profile", twitter: "@contractor_pro" },
+      occupation: "Freelance Developer",
+      income_level: "$75k - $120k",
+      assets: "Owns professional equipment, local workshop",
+      last_ai_source_at: new Date()
+    };
+
+    const result = await pool.query(
+      "UPDATE contacts SET social_media=$1, occupation=$2, income_level=$3, assets=$4, last_ai_source_at=$5, updated_at=NOW() WHERE id=$6 RETURNING *",
+      [mockUpdate.social_media, mockUpdate.occupation, mockUpdate.income_level, mockUpdate.assets, mockUpdate.last_ai_source_at, id]
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: "Contact not found" });
+    }
+    res.json({ message: "Information sourced (Mock)", contact: result.rows[0] });
+  } catch (error) {
+    console.error("Error sourcing info:", error);
+    res.status(500).json({ error: "Failed to source info" });
+  }
+});
 
 const PORT = process.env.PORT || 3000;
 
